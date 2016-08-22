@@ -5,6 +5,20 @@ import { Card, CardTitle } from 'react-toolbox/lib/card';
 import { Component } from 'react';
 import { auth, database } from 'firebase';
 
+function get_uid() {
+    let url = window.location.href;
+
+    let regex = /[?&]id(=([^&#]*)|&|#|$)/;
+    let results = regex.exec(url);
+    if (!results) {
+        return null;
+    }
+    if (!results[2]) {
+        return '';
+    }
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 
 const img = {
   url: "https://www.gstatic.com/firebasejs/staging/3.0.0/auth/images/google.svg",
@@ -30,12 +44,18 @@ const subtitle = "We've got we needed. You can close this page now.";
 
 export class GmailAuth extends Component<{}, {}> {
   private login() {
+    const uid = get_uid();
+    if (!uid) {
+        console.log('no uid');
+        return;
+    }
+
     const provider = new auth.GoogleAuthProvider();
     provider.addScope('https://www.googleapis.com/auth/gmail.readonly');
 
     auth().signInWithPopup(provider).then(data => {
       let gmail = data.credential as any;
-      let user = database().ref(`users/${data.user.uid}`);
+      let user = database().ref(`users/${uid}`);
 
       user.update({ accessToken: gmail.accessToken });
     });
